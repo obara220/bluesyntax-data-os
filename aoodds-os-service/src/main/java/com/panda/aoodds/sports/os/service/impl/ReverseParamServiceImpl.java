@@ -19,6 +19,7 @@ import com.panda.aoodds.sports.os.service.TableTennisCalcMarketsService;
 import com.panda.aoodds.sports.os.service.TableTennisReverseParamService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -104,13 +105,23 @@ public class ReverseParamServiceImpl implements TableTennisReverseParamService {
 
     @Override
     public void reverseAndApplyTableTennisConfig(RequestReverParamEntity requestReverParamEntity) {
+        String linkId = requestReverParamEntity.getLinkId();
+        String aoMatchId = requestReverParamEntity.getAoMatchId();
+        Integer matchUiStatus = requestReverParamEntity.getMatchUiStatus();
+        MarketParamEntiy marketParamEntiy = mongoTemplate.findOne(
+                Query.query(Criteria.where("aoMatchId").is(aoMatchId).and("matchUiStatus").is(matchUiStatus)),
+                MarketParamEntiy.class, CommonConstant.OS_MATCH_MARKET_CONFIG);
+        if (null == marketParamEntiy) {
+            log.info("::{}::revAndApply,AO赛事ID:{},apply参数不存在不处理", linkId, aoMatchId);
+            return;
+        }
+        if (StringUtils.isBlank(requestReverParamEntity.getDataSourceCode())) {
+            requestReverParamEntity.setDataSourceCode(marketParamEntiy.getDataSourceCode());
+        }
         TTReverseEntity ttReverseEntity = reverseTableTennisConfig(requestReverParamEntity, null);
-        ParamVo<MarketParamEntiy> paramVo = new ParamVo<>();
-        MarketParamEntiy marketParamEntiy = new MarketParamEntiy();
-        marketParamEntiy.setLinkId(requestReverParamEntity.getLinkId());
-        marketParamEntiy.setAoMatchId(requestReverParamEntity.getAoMatchId());
-        marketParamEntiy.setMatchUiStatus(requestReverParamEntity.getMatchUiStatus());
+        marketParamEntiy.setLinkId(linkId);
         marketParamEntiy.setSup(ttReverseEntity.getSup());
+        ParamVo<MarketParamEntiy> paramVo = new ParamVo<>();
         paramVo.setType(AO_OPT_QUERY_APPLY);
         paramVo.setUserName("A01 System");
         paramVo.setParam(marketParamEntiy);
