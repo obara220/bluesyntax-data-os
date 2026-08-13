@@ -58,7 +58,8 @@ public class AoCheckAutoParamTimer {
                         aoMatchIdAndstandardMatchId.put(String.valueOf(f.getAoMatchId()), f.getStandardMatchId());
                         return String.valueOf(f.getAoMatchId());
                     }).collect(Collectors.toList());
-                    Query query = Query.query(Criteria.where("aoMatchId").in(aoMatchIds).and("matchUiStatus").is(0).and("aoAuto").is(1));
+                    //108958 beginTime>now 已限定早盘，不再按 matchUiStatus 过滤
+                    Query query = Query.query(Criteria.where("aoMatchId").in(aoMatchIds).and("aoAuto").is(1));
                     List<MarketParamEntiy> marketParamEntiys = aoProducerMongoTemp.find(query, MarketParamEntiy.class, CommonConstant.OS_MATCH_MARKET_CONFIG);
                     List<Long> standardMatchIds = marketParamEntiys.stream().map(f -> aoMatchIdAndstandardMatchId.get(f.getAoMatchId())).collect(Collectors.toList());
                     AutoApplyMarketOddsErrorMsgEntity autoApplyMarketOddsErrorMsgEntity = new AutoApplyMarketOddsErrorMsgEntity();

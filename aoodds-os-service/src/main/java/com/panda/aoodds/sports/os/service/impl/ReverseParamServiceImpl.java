@@ -59,7 +59,6 @@ public class ReverseParamServiceImpl implements TableTennisReverseParamService {
             log.info("::{}::【reverseParam】此数据源维护中,AO赛事ID:{},数据源:{}", linkId, aoMatchId, dataSourceCode);
             throw new ApiException("此数据源维护中," + linkId);
         }
-        Integer matchUiStatus = requestReverParamEntity.getMatchUiStatus();
         String categoryTypeKey = RedisKeyConstant.THIRD_OS_AO_MARKET_ODDS_KEY;
         String key = categoryTypeKey + aoMatchId + ":" + dataSourceCode;
         Object obj = redisService.hGetAll(key);
@@ -72,7 +71,7 @@ public class ReverseParamServiceImpl implements TableTennisReverseParamService {
             log.info("::{}::【reverseParam】赛事球头参数不全2,AO赛事ID:{},数据源:{}，缓存:{}", linkId, aoMatchId, dataSourceCode, obj);
             throw new ApiException("No data ，plz choose other bookmaker ");
         }
-        MarketParamEntiy  marketParamEntiy = mongoTemplate.findOne(Query.query(Criteria.where("aoMatchId").is(aoMatchId).and("matchUiStatus").is(matchUiStatus)), MarketParamEntiy.class, CommonConstant.OS_MATCH_MARKET_CONFIG);
+        MarketParamEntiy  marketParamEntiy = findMatchMarketConfig(aoMatchId);
         Properties matchTemplateConfigProperties = new Properties();
         matchTemplateConfigProperties.put("winHomeOdds", properties.get("ftWinnerOdds1"));
         matchTemplateConfigProperties.put("winAwayOdds", properties.get("ftWinnerOdds2"));
@@ -91,7 +90,7 @@ public class ReverseParamServiceImpl implements TableTennisReverseParamService {
         String linkId = requestReverParamEntity.getLinkId();
         String aoMatchId = requestReverParamEntity.getAoMatchId();
         String dataSourceCode = requestReverParamEntity.getDataSourceCode();
-        MarketParamEntiy marketParamEntiy = mongoTemplate.findOne(Query.query(Criteria.where("aoMatchId").is(aoMatchId).and("matchUiStatus").is(requestReverParamEntity.getMatchUiStatus())), MarketParamEntiy.class, CommonConstant.OS_MATCH_MARKET_CONFIG);
+        MarketParamEntiy marketParamEntiy = findMatchMarketConfig(aoMatchId);
         if (null == marketParamEntiy) {
             log.info("::{}::自动revAndApply,AO赛事ID:{},数据源:{}，apply参数不存在不处理", linkId, aoMatchId, dataSourceCode);
             return;
@@ -107,10 +106,7 @@ public class ReverseParamServiceImpl implements TableTennisReverseParamService {
     public void reverseAndApplyTableTennisConfig(RequestReverParamEntity requestReverParamEntity) {
         String linkId = requestReverParamEntity.getLinkId();
         String aoMatchId = requestReverParamEntity.getAoMatchId();
-        Integer matchUiStatus = requestReverParamEntity.getMatchUiStatus();
-        MarketParamEntiy marketParamEntiy = mongoTemplate.findOne(
-                Query.query(Criteria.where("aoMatchId").is(aoMatchId).and("matchUiStatus").is(matchUiStatus)),
-                MarketParamEntiy.class, CommonConstant.OS_MATCH_MARKET_CONFIG);
+        MarketParamEntiy marketParamEntiy = findMatchMarketConfig(aoMatchId);
         if (null == marketParamEntiy) {
             log.info("::{}::revAndApply,AO赛事ID:{},apply参数不存在不处理", linkId, aoMatchId);
             return;
@@ -126,6 +122,12 @@ public class ReverseParamServiceImpl implements TableTennisReverseParamService {
         paramVo.setUserName("A01 System");
         paramVo.setParam(marketParamEntiy);
         tableTennisCalcMarketsService.applyOrcacl(paramVo);
+    }
+
+    /** 108958 一个赛事只有一条配置(_id=aoMatchId)，按 aoMatchId 查 */
+    private MarketParamEntiy findMatchMarketConfig(String aoMatchId) {
+        return mongoTemplate.findOne(Query.query(Criteria.where("aoMatchId").is(aoMatchId)),
+                MarketParamEntiy.class, CommonConstant.OS_MATCH_MARKET_CONFIG);
     }
 
 }
