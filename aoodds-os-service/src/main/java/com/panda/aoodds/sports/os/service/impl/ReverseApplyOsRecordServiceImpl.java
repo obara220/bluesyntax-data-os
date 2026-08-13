@@ -101,7 +101,7 @@ public class ReverseApplyOsRecordServiceImpl implements ReverseApplyOsRecordServ
         if (StringUtils.isBlank(objectId)) {
             return new PageModel(pageNum, pageSize, 0, jsons);
         }
-        AoMatchInfoEntity aoMatchInfoEntity = mongoTemplate.findOne(Query.query(Criteria.where("matchManageId").is(objectId)), AoMatchInfoEntity.class, CommonConstant.MATCH_INFO);
+        AoMatchInfoEntity aoMatchInfoEntity = mongoTemplate.findOne(Query.query(Criteria.where("matchManageId").is(Long.valueOf(objectId))), AoMatchInfoEntity.class, CommonConstant.MATCH_INFO);
         if (null != aoMatchInfoEntity) {
             query.addCriteria(Criteria.where("aoMatchId").is(aoMatchInfoEntity.getAoMatchId() + ""));
         } else {
