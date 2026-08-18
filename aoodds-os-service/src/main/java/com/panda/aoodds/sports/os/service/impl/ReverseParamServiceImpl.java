@@ -55,6 +55,11 @@ public class ReverseParamServiceImpl implements TableTennisReverseParamService {
         String aoMatchId = requestReverParamEntity.getAoMatchId();
         String linkId = requestReverParamEntity.getLinkId();
         String dataSourceCode = requestReverParamEntity.getDataSourceCode();
+        //未选数据源时 cheack 里的 dataSourceCode.split() 会直接 NPE，先拦成业务提示
+        if (StringUtils.isBlank(dataSourceCode)) {
+            log.info("::{}::【reverseParam】未选择数据源,AO赛事ID:{}", linkId, aoMatchId);
+            throw new ApiException("plz choose a bookmaker ");
+        }
         if (maintainDataSourceHandler.cheack(linkId, aoMatchId, dataSourceCode)) {
             log.info("::{}::【reverseParam】此数据源维护中,AO赛事ID:{},数据源:{}", linkId, aoMatchId, dataSourceCode);
             throw new ApiException("此数据源维护中," + linkId);
